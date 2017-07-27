@@ -28,15 +28,26 @@ function cleanBadIpAdress($server_name, $dhcp_scope)
                     foreach ($content as $line) {
                         $line = explode("  ", $line);
                         // $line[0] is IP address, $line[1] have subnet, $line[2] have mac address
+                        // sometime $line[1] is emplty and $line[2] have subnet and $line[3] have mac address
+                        $bad_ip = null;
                         if (isset($line[1]) && isset($line[2]) && strpos($line[1], '255.') !== false) {
                             if (strlen($line[2]) > 20) {
                                 // found bad mac address
                                 $bad_ip = $line[0];
                                 echo "Found bad ip {$bad_ip}, mac address {$line[2]}" . PHP_EOL;
-                                // delete bad address
-                                exec("netsh dhcp server scope {$scope} delete lease {$bad_ip}");
-                                echo "Bad IP {$bad_ip} deleted" . PHP_EOL;
                             }
+                        } elseif (isset($line[2]) && isset($line[3]) && strpos($line[2], '255.') !== false) {
+                            if (strlen($line[3]) > 20) {
+                                // found bad mac address
+                                $bad_ip = $line[0];
+                                echo "Found bad ip {$bad_ip}, mac address {$line[3]}" . PHP_EOL;
+                            }
+                        }
+
+                        if ($bad_ip) {
+                            // delete bad address
+                            exec("netsh dhcp server scope {$scope} delete lease {$bad_ip}");
+                            echo "Bad IP {$bad_ip} deleted" . PHP_EOL;
                         }
                     }
                 }
